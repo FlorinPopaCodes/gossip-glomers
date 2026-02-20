@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"time"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
 func main() {
 	var messages []int
-	topology := map[string][]string{}
+	seen := map[int]bool{}
 
 	n := maelstrom.NewNode()
 
@@ -20,19 +21,21 @@ func main() {
 			return err
 		}
 
-		message := int(request["message"].(float64))
-		messages = append(messages, message)
-
-		if topology[msg.Src] == nil {
-			for _, peer := range n.NodeIDs() {
-				if peer != n.ID() {
-					n.Send(peer, request)
-				}
-			}
-		}
-
 		response := map[string]any{}
 		response["type"] = "broadcast_ok"
+
+		message := int(request["message"].(float64))
+		if seen[message] {
+			return nil
+		}
+		messages = append(messages, message)
+		seen[message] = true
+
+		for _, peer := range n.NodeIDs() {
+			if peer != n.ID() {
+				n.Send(peer, request)
+			}
+		}
 
 		return n.Reply(msg, response)
 	})
@@ -54,7 +57,7 @@ func main() {
 			return err
 		}
 
-		topology = topologyRequest.Topology
+		_ = topologyRequest.Topology
 
 		response := map[string]any{}
 		response["type"] = "topology_ok"
@@ -62,8 +65,31 @@ func main() {
 		return n.Reply(msg, response)
 	})
 
+	ticker := time.NewTicker(500 * time.Millisecond)
+	go func() {
+		for range ticker.C {
+			for _, peer := range n.NodeIDs() {
+				if peer != n.ID() {
+					for _, number := range messages {
+						n.RPC(peer, broadcastRequest(number), nil)
+					}
+
+				}
+			}
+		}
+	}()
+
 	if err := n.Run(); err != nil {
 		log.Printf("ERROR: %s", err)
 		os.Exit(1)
 	}
+}
+
+func broadcastRequest(number int) map[string]any {
+	request := map[string]any{}
+
+	request["type"] = "broadcast"
+	request["message"] = number
+
+	return request
 }

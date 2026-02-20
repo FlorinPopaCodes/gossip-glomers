@@ -27,9 +27,24 @@ test-unique-ids: maelstrom-unique-ids
 		--availability total \
 		--nemesis partition
 
-test-broadcast: maelstrom-broadcast
+test-broadcast-3a: maelstrom-broadcast
 	maelstrom test -w broadcast \
 		--bin ./bin/maelstrom-broadcast \
 		--node-count 1 \
 		--time-limit 20 \
 		--rate 10
+
+test-broadcast-3b: maelstrom-broadcast
+	maelstrom test -w broadcast \
+		--bin ./bin/maelstrom-broadcast \
+		--node-count 5 \
+		--time-limit 20 \
+		--rate 10
+
+test-broadcast: maelstrom-broadcast
+	maelstrom test -w broadcast \
+		--bin ./bin/maelstrom-broadcast \
+		--node-count 5 \
+		--time-limit 20 \
+		--rate 10 \
+		--nemesis partition
