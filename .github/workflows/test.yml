@@ -1,0 +1,52 @@
+name: Maelstrom Tests
+
+on: push
+
+env:
+  MAELSTROM_VERSION: "0.2.4"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Cache Maelstrom
+        id: cache-maelstrom
+        uses: actions/cache@v4
+        with:
+          path: maelstrom/
+          key: maelstrom-${{ env.MAELSTROM_VERSION }}
+
+      - name: Download Maelstrom
+        if: steps.cache-maelstrom.outputs.cache-hit != 'true'
+        run: |
+          curl -L -o maelstrom.tar.bz2 \
+            "https://github.com/jepsen-io/maelstrom/releases/download/v${MAELSTROM_VERSION}/maelstrom.tar.bz2"
+          tar xjf maelstrom.tar.bz2
+
+      - name: Build
+        run: make all
+
+      - name: Test Echo
+        run: ./maelstrom/maelstrom test -w echo --bin ./bin/maelstrom-echo --node-count 1 --time-limit 10
+
+      - name: Test Unique IDs
+        run: |
+          ./maelstrom/maelstrom test -w unique-ids \
+            --bin ./bin/maelstrom-unique-ids \
+            --time-limit 30 \
+            --rate 1000 \
+            --node-count 3 \
+            --availability total \
+            --nemesis partition
