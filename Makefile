@@ -1,4 +1,4 @@
-CHALLENGES = maelstrom-echo maelstrom-unique-ids
+CHALLENGES = maelstrom-echo maelstrom-unique-ids maelstrom-broadcast
 
 .PHONY: all clean $(CHALLENGES)
 
@@ -26,3 +26,10 @@ test-unique-ids: maelstrom-unique-ids
 		--node-count 3 \
 		--availability total \
 		--nemesis partition
+
+test-broadcast: maelstrom-broadcast
+	maelstrom test -w broadcast \
+		--bin ./bin/maelstrom-broadcast \
+		--node-count 1 \
+		--time-limit 20 \
+		--rate 10
