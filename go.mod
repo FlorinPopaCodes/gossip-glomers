@@ -1,4 +1,4 @@
-module github.com/florinpopa/gossip-glomers
+module github.com/FlorinPopaCodes/gossip-glomers
 
 go 1.25.0
 
