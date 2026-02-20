@@ -37,6 +37,9 @@ jobs:
 
     name: test-${{ matrix.name }}
     steps:
+      - name: Install Maelstrom dependencies
+        run: sudo apt-get install -y gnuplot graphviz
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
