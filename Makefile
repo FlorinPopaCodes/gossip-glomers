@@ -41,10 +41,28 @@ test-broadcast-3b: maelstrom-broadcast
 		--time-limit 20 \
 		--rate 10
 
-test-broadcast: maelstrom-broadcast
+test-broadcast-3c: maelstrom-broadcast
 	maelstrom test -w broadcast \
 		--bin ./bin/maelstrom-broadcast \
 		--node-count 5 \
 		--time-limit 20 \
 		--rate 10 \
 		--nemesis partition
+
+test-broadcast-3d: maelstrom-broadcast
+	maelstrom test -w broadcast \
+		--bin ./bin/maelstrom-broadcast \
+		--node-count 25 \
+		--time-limit 20 \
+		--rate 100 \
+		--latency 100
+	./check-results.sh 30 400 600
+
+test-broadcast: maelstrom-broadcast
+	maelstrom test -w broadcast \
+		--bin ./bin/maelstrom-broadcast \
+		--node-count 25 \
+		--time-limit 20 \
+		--rate 100 \
+		--latency 100
+	./check-results.sh 20 1000 2000

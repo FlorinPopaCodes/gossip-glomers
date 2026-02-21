@@ -4,14 +4,17 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
 
 func main() {
+	var mu sync.RWMutex
 	var messages []int
-	seen := map[int]bool{}
+	seen := map[int]struct{}{}
+	var siblings []string
 
 	n := maelstrom.NewNode()
 
@@ -25,14 +28,19 @@ func main() {
 		response["type"] = "broadcast_ok"
 
 		message := int(request["message"].(float64))
-		if seen[message] {
+		mu.Lock()
+		if _, exists := seen[message]; exists {
+			mu.Unlock()
 			return nil
 		}
 		messages = append(messages, message)
-		seen[message] = true
+		seen[message] = struct{}{}
+		mu.Unlock()
 
-		for _, peer := range n.NodeIDs() {
-			if peer != n.ID() {
+		// TODO: remove this for part e
+		for _, peer := range siblings {
+			if peer != msg.Src {
+				// TODO: start tracking acks
 				n.Send(peer, request)
 			}
 		}
@@ -44,7 +52,13 @@ func main() {
 		response := map[string]any{}
 
 		response["type"] = "read_ok"
-		response["messages"] = messages
+
+		mu.RLock()
+		snapshot := make([]int, len(messages))
+		copy(snapshot, messages)
+		mu.RUnlock()
+
+		response["messages"] = snapshot
 
 		return n.Reply(msg, response)
 	})
@@ -57,7 +71,8 @@ func main() {
 			return err
 		}
 
-		_ = topologyRequest.Topology
+		// TODO: Remove loops from siblings
+		siblings = topologyRequest.Topology[n.ID()]
 
 		response := map[string]any{}
 		response["type"] = "topology_ok"
@@ -65,15 +80,18 @@ func main() {
 		return n.Reply(msg, response)
 	})
 
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			for _, peer := range n.NodeIDs() {
-				if peer != n.ID() {
-					for _, number := range messages {
-						n.RPC(peer, broadcastRequest(number), nil)
-					}
+			// TODO: only re-send unacks
+			mu.RLock()
+			snapshot := make([]int, len(messages))
+			copy(snapshot, messages)
+			mu.RUnlock()
 
+			for _, peer := range siblings {
+				for _, number := range snapshot {
+					n.RPC(peer, broadcastRequest(number), nil)
 				}
 			}
 		}
