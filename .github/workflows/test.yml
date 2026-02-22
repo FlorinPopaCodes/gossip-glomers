@@ -34,6 +34,8 @@ jobs:
             args: -w echo --bin ./bin/maelstrom-echo --node-count 1 --time-limit 10
           - name: unique-ids
             args: -w unique-ids --bin ./bin/maelstrom-unique-ids --time-limit 30 --rate 1000 --node-count 3 --availability total --nemesis partition
+          - name: counter
+            args: -w g-counter --bin ./bin/maelstrom-counter --node-count 3 --rate 100 --time-limit 20 --nemesis partition
 
     name: test-${{ matrix.name }}
     steps:

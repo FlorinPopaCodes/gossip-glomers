@@ -1,4 +1,4 @@
-CHALLENGES = maelstrom-echo maelstrom-unique-ids maelstrom-broadcast
+CHALLENGES = maelstrom-echo maelstrom-unique-ids maelstrom-broadcast maelstrom-counter
 
 .PHONY: all clean $(CHALLENGES)
 
@@ -66,3 +66,11 @@ test-broadcast: maelstrom-broadcast
 		--rate 100 \
 		--latency 100
 	./check-results.sh 20 1000 2000
+
+test-counter: maelstrom-counter
+	maelstrom test -w g-counter \
+		--bin ./bin/maelstrom-counter \
+		--node-count 3 \
+		--rate 100 \
+		--time-limit 20 \
+		--nemesis partition
