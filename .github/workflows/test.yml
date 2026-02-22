@@ -36,6 +36,10 @@ jobs:
             args: -w unique-ids --bin ./bin/maelstrom-unique-ids --time-limit 30 --rate 1000 --node-count 3 --availability total --nemesis partition
           - name: counter
             args: -w g-counter --bin ./bin/maelstrom-counter --node-count 3 --rate 100 --time-limit 20 --nemesis partition
+          - name: kafka
+            args: -w kafka --bin ./bin/maelstrom-kafka --node-count 1 --concurrency 2n --time-limit 20 --rate 1000
+          - name: txn
+            args: -w txn-rw-register --bin ./bin/maelstrom-txn --node-count 1 --concurrency 2n --time-limit 20 --rate 1000 --consistency-models read-uncommitted --availability total
 
     name: test-${{ matrix.name }}
     steps:

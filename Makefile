@@ -1,4 +1,4 @@
-CHALLENGES = maelstrom-echo maelstrom-unique-ids maelstrom-broadcast maelstrom-counter
+CHALLENGES = maelstrom-echo maelstrom-unique-ids maelstrom-broadcast maelstrom-counter maelstrom-kafka maelstrom-txn
 
 .PHONY: all clean $(CHALLENGES)
 
@@ -74,3 +74,21 @@ test-counter: maelstrom-counter
 		--rate 100 \
 		--time-limit 20 \
 		--nemesis partition
+
+test-kafka: maelstrom-kafka
+	maelstrom test -w kafka \
+		--bin ./bin/maelstrom-kafka \
+		--node-count 1 \
+		--concurrency 2n \
+		--time-limit 20 \
+		--rate 1000
+
+test-txn: maelstrom-txn
+	maelstrom test -w txn-rw-register \
+		--bin ./bin/maelstrom-txn \
+		--node-count 1 \
+		--concurrency 2n \
+		--time-limit 20 \
+		--rate 1000 \
+		--consistency-models read-uncommitted \
+		--availability total
